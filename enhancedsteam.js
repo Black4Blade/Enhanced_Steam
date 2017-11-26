@@ -2408,6 +2408,42 @@ function add_custom_wallet_amount() {
 	});
 }
 
+function add_custom_giftcard_amount() {
+	var addfunds = $(".addfunds_area_purchase_game:first").clone();
+	$(addfunds).addClass("es_custom_funds");
+	$(addfunds).find(".btnv6_green_white_innerfade").addClass("es_custom_button");
+	$(addfunds).find("h1").text(localized_strings.wallet.custom_amount);
+	$(addfunds).find("p").text(localized_strings.wallet.custom_amount_text.replace("__minamount__", $(addfunds).find(".price").text().trim()));
+	var currency_symbol = currency_symbol_from_string($(addfunds).find(".price").text().trim());
+	var minimum = $(addfunds).find(".price").text().trim().replace(/(?:R\$|\$|€|¥|£|pуб)/, "");
+	var formatted_minimum = minimum;
+	switch (currency_symbol) {
+		case "€":
+		case "pуб":
+			$(addfunds).find(".price").html("<input id='es_custom_funds_amount' class='es_text_input' style='margin-top: -3px;' size=4 value='" + minimum +"'> " + currency_symbol);
+			break;
+		default:
+			$(addfunds).find(".price").html(currency_symbol + " <input id='es_custom_funds_amount' class='es_text_input' style='margin-top: -3px;' size=4 value='" + minimum +"'>");
+			break;
+	}
+	$("#game_area_purchase .addfunds_area_purchase_game:first").after(addfunds);
+	$("#es_custom_funds_amount").change(function() {
+		// Make sure two numbers are entered after the separator
+		if (!($("#es_custom_funds_amount").val().match(/(\.|\,)\d\d$/))) { $("#es_custom_funds_amount").val($("#es_custom_funds_amount").val().replace(/\D/g, "")); }
+
+		// Make sure the user entered decimals. If not, add 00 to the end of the number to make the value correct.
+		if (currency_symbol == "€" || currency_symbol == "pуб" || currency_symbol == "R$") {
+			if ($("#es_custom_funds_amount").val().indexOf(",") == -1) $("#es_custom_funds_amount").val($("#es_custom_funds_amount").val() + ",00");
+		} else {
+			if ($("#es_custom_funds_amount").val().indexOf(".") == -1) $("#es_custom_funds_amount").val($("#es_custom_funds_amount").val() + ".00");
+		}
+
+		var calculated_value = $("#es_custom_funds_amount").val().replace(/-/g, "0").replace(/\D/g, "").replace(/[^A-Za-z0-9]/g, '');		
+		$("#es_custom_funds_amount").val($("#es_custom_funds_amount").val().replace(/[A-Za-z]/g, ''));
+		$(".es_custom_button").attr("href", "javascript:submitAddFunds( " + calculated_value + " );")
+	});
+}
+
 // If app has a coupon, display a message.
 function display_coupon_message(appid) {
 	load_inventory().done(function() {
@@ -9100,6 +9136,10 @@ $(document).ready(function(){
 
 						case /^\/steamaccount\/addfunds/.test(path):
 							add_custom_wallet_amount();
+							break;
+						
+						case /^\/digitalgiftcards\/selectgiftcard/.test(path):
+							function add_custom_giftcard_amount();
 							break;
 
 						case /^\/search\/.*/.test(path):
